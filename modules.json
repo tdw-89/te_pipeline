@@ -1,0 +1,31 @@
+{
+    "$schema": "https://raw.githubusercontent.com/nf-core/modules/master/modules/modules-repo-schema.json",
+    "name": "te_pipeline",
+    "homePage": "https://github.com/tdw-89/te_pipeline",
+    "repos": {
+        "https://github.com/nf-core/modules.git": {
+            "modules": {
+                "nf-core": {
+                    "repeatmodeler/builddatabase": {
+                        "branch": "master",
+                        "git_sha": "61cd0d3823f5596e86f09d55d21f96c871845d19",
+                        "installed_by": ["modules"]
+                    },
+                    "repeatmodeler/repeatmodeler": {
+                        "branch": "master",
+                        "git_sha": "61cd0d3823f5596e86f09d55d21f96c871845d19",
+                        "installed_by": ["modules"]
+                    },
+                    "repeatmasker/repeatmasker": {
+                        "branch": "master",
+                        "git_sha": "61cd0d3823f5596e86f09d55d21f96c871845d19",
+                        "installed_by": ["modules"]
+                    }
+                }
+            },
+            "subworkflows": {
+                "nf-core": {}
+            }
+        }
+    }
+}
