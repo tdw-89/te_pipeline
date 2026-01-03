@@ -25,7 +25,7 @@ include { ONECODETOFINDTHEMALL        } from './modules/local/onecodetofindthema
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    PRINT HELP MESSAGE
+    HELP MESSAGE FUNCTION
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
@@ -58,25 +58,38 @@ def helpMessage() {
     """.stripIndent()
 }
 
-if (params.help) {
-    helpMessage()
-    exit 0
-}
-
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    VALIDATE INPUTS
+    PROCESS: DUMP SOFTWARE VERSIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-if (!params.input) {
-    log.error "ERROR: --input parameter is required. Please provide a genome FASTA file."
-    helpMessage()
-    exit 1
-}
+process CUSTOM_DUMPSOFTWAREVERSIONS {
+    label 'process_single'
+    
+    publishDir "${params.outdir}/pipeline_info", mode: 'copy'
 
-// Check if input file exists
-input_file = file(params.input, checkIfExists: true)
+    input:
+    path versions
+
+    output:
+    path "software_versions.yml"    , emit: yml
+    path "software_versions_mqc.yml", emit: mqc_yml
+
+    script:
+    """
+    cat $versions > software_versions.yml
+    
+    # Create MultiQC-compatible version for reporting
+    echo "id: 'software_versions'" > software_versions_mqc.yml
+    echo "section_name: 'TE Pipeline Software Versions'" >> software_versions_mqc.yml
+    echo "plot_type: 'html'" >> software_versions_mqc.yml
+    echo "data: |" >> software_versions_mqc.yml
+    echo "  <dl class='dl-horizontal'>" >> software_versions_mqc.yml
+    cat $versions | sed 's/^/    /' >> software_versions_mqc.yml
+    echo "  </dl>" >> software_versions_mqc.yml
+    """
+}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -85,6 +98,23 @@ input_file = file(params.input, checkIfExists: true)
 */
 
 workflow {
+    //
+    // VALIDATE INPUTS
+    //
+    if (params.help) {
+        helpMessage()
+        exit 0
+    }
+
+    if (!params.input) {
+        log.error "ERROR: --input parameter is required. Please provide a genome FASTA file."
+        helpMessage()
+        exit 1
+    }
+
+    // Check if input file exists
+    def input_file = file(params.input, checkIfExists: true)
+
     // Create input channel with metadata
     // Format: [ [id: sample_name], path_to_fasta ]
     ch_genome = channel.of(
@@ -107,7 +137,7 @@ workflow {
     //
     REPEATMASKER_REPEATMASKER(
         ch_genome,
-        REPEATMODELER_REPEATMODELER.out.fasta.map { meta, fasta -> fasta }
+        REPEATMODELER_REPEATMODELER.out.fasta.map { _meta, fasta -> fasta }
     )
 
     //
@@ -116,34 +146,17 @@ workflow {
     //
     ONECODETOFINDTHEMALL(
         REPEATMASKER_REPEATMASKER.out.out,
-        ch_genome.map { meta, fasta -> fasta }
+        ch_genome.map { _meta, fasta -> fasta }
     )
 
     //
-    // Collect version information from all modules
+    // Collect version information from all modules and save to disk
     //
     ch_versions = REPEATMODELER_BUILDDATABASE.out.versions
         .mix(REPEATMODELER_REPEATMODELER.out.versions)
         .mix(REPEATMASKER_REPEATMASKER.out.versions)
         .mix(ONECODETOFINDTHEMALL.out.versions)
-        .collect()
-}
+        .collectFile(name: 'collated_versions.yml')
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    COMPLETION MESSAGES
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-workflow.onComplete {
-    log.info ""
-    log.info "Pipeline completed at: ${workflow.complete}"
-    log.info "Execution status: ${workflow.success ? 'SUCCESS' : 'FAILED'}"
-    log.info "Execution duration: ${workflow.duration}"
-    log.info "Output directory: ${params.outdir}"
-    log.info ""
-}
-
-workflow.onError {
-    log.error "Pipeline execution stopped with error: ${workflow.errorMessage}"
+    CUSTOM_DUMPSOFTWAREVERSIONS(ch_versions)
 }
