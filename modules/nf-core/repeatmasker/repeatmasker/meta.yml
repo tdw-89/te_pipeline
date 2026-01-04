@@ -40,10 +40,10 @@ input:
 output:
   masked:
     - - meta:
-          type: map
-          description: |
-            Groovy Map containing sample information
-            e.g. [ id:'test' ]
+          type: file
+          description: Masked fasta
+          pattern: "*.{masked}"
+          ontologies: []
       - ${prefix}.masked:
           type: file
           description: Masked fasta
@@ -51,35 +51,35 @@ output:
           ontologies: []
   out:
     - - meta:
-          type: map
-          description: |
-            Groovy Map containing sample information
-            e.g. [ id:'test' ]
+          type: file
+          description: Masked fasta
+          pattern: "*.{masked}"
+          ontologies: []
       - ${prefix}.out:
           type: file
-          description: RepeatMasker annotation output file
+          description: Out file
           pattern: "*.{out}"
           ontologies: []
   tbl:
     - - meta:
-          type: map
-          description: |
-            Groovy Map containing sample information
-            e.g. [ id:'test' ]
+          type: file
+          description: Masked fasta
+          pattern: "*.{masked}"
+          ontologies: []
       - ${prefix}.tbl:
           type: file
-          description: Summary statistics table
+          description: tbl file
           pattern: "*.{tbl}"
           ontologies: []
   gff:
     - - meta:
-          type: map
-          description: |
-            Groovy Map containing sample information
-            e.g. [ id:'test' ]
+          type: file
+          description: Masked fasta
+          pattern: "*.{masked}"
+          ontologies: []
       - ${prefix}.gff:
           type: file
-          description: GFF annotation file
+          description: GFF file
           pattern: "*.{gff}"
           ontologies:
             - edam: http://edamontology.org/format_2305
