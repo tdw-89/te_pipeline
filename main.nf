@@ -45,16 +45,8 @@ def helpMessage() {
         --outdir        Output directory (default: 'results')
         --help          Show this help message
     
-    Profiles:
-        -profile singularity    Use Singularity containers
-        -profile apptainer      Use Apptainer containers
-        -profile docker         Use Docker containers
-        -profile unity          UMass Unity cluster with Apptainer and SLURM
-        -profile test           Test with minimal resources
-    
     Example:
-        nextflow run main.nf --input genome.fasta -profile apptainer
-        nextflow run main.nf --input genome.fasta -profile unity
+        nextflow run main.nf --input genome.fasta
     """.stripIndent()
 }
 
