@@ -67,6 +67,11 @@ def helpMessage() {
 process CUSTOM_DUMPSOFTWAREVERSIONS {
     label 'process_single'
     
+    // Use a minimal container with basic shell utilities
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/ubuntu:22.04':
+        'ubuntu:22.04' }"
+    
     publishDir "${params.outdir}/pipeline_info", mode: 'copy'
 
     input:
