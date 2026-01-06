@@ -40,10 +40,14 @@ process ONECODETOFINDTHEMALL {
     task.ext.when == null || task.ext.when
 
     script:
-    def args_dict    = task.ext.args_dict ?: ''
-    def args_octrta  = task.ext.args_octrta ?: ''
-    prefix           = task.ext.prefix ?: "${meta.id}"
+    def args_dict   = task.ext.args_dict    ?: ''
+    def args_octrta = task.ext.args_octrta  ?: ''
+    def prefix      = task.ext.prefix       ?: "${meta.id}"
     """
+    # Set Julia depot path to a writable location (container's /opt is read-only)
+    export JULIA_DEPOT_PATH="\${PWD}/.julia"
+    mkdir -p "\${JULIA_DEPOT_PATH}"
+
     # Create output directory for OCTRTA results
     mkdir -p ${prefix}_octrta_output
 
@@ -68,10 +72,13 @@ process ONECODETOFINDTHEMALL {
 
     # Step 2: Run OneCodeToFindThemAll to identify high-confidence TEs
     # Uses the dictionary to properly associate LTR and internal regions
+    echo "DEBUG: Running one_code_to_find_them_all.pl..."
+    echo "DEBUG: genome_fa value is: \${genome_fa}"
     one_code_to_find_them_all.pl \\
         --rm ${repeatmasker_out} \\
         --ltr ${prefix}_dictionary.txt \\
-        --fasta \${genome_fa} ${args_octrta}
+        --fasta "\${genome_fa}" ${args_octrta}
+    echo "DEBUG: one_code_to_find_them_all.pl completed"
 
     # Move all generated output files to the output directory
     # OCTRTA creates files with patterns: *.transposons.csv, *.ltr.csv, 
