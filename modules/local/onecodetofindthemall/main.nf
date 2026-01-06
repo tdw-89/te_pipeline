@@ -44,9 +44,9 @@ process ONECODETOFINDTHEMALL {
     def args_octrta = task.ext.args_octrta  ?: ''
     def prefix      = task.ext.prefix       ?: "${meta.id}"
     """
-    # Set Julia depot path to a writable location (container's /opt is read-only)
-    export JULIA_DEPOT_PATH="\${PWD}/.julia"
-    mkdir -p "\${JULIA_DEPOT_PATH}"
+    # Set Julia depot path: writable location first for caching, then container's packages
+    export JULIA_DEPOT_PATH="\${PWD}/.julia:/opt/julia"
+    mkdir -p "\${PWD}/.julia"
 
     # Create output directory for OCTRTA results
     mkdir -p ${prefix}_octrta_output
