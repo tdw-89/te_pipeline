@@ -58,8 +58,7 @@ process ONECODETOFINDTHEMALL {
     # Step 1: Build the LTR dictionary from RepeatMasker output
     # This identifies LTR/internal element associations
     build_dictionary.pl \\
-        --rm ${repeatmasker_out} \\
-        ${args_dict} \\
+        --rm ${repeatmasker_out} ${args_dict} \\
         > ${prefix}_dictionary.txt
 
     # Check if dictionary is empty (no LTR elements found)
@@ -72,8 +71,7 @@ process ONECODETOFINDTHEMALL {
     one_code_to_find_them_all.pl \\
         --rm ${repeatmasker_out} \\
         --ltr ${prefix}_dictionary.txt \\
-        --fasta \${genome_fa} \\
-        ${args_octrta}
+        --fasta \${genome_fa} ${args_octrta}
 
     # Move all generated output files to the output directory
     # OCTRTA creates files with patterns: *.transposons.csv, *.ltr.csv, 
