@@ -24,7 +24,7 @@ process REPEATMASKER_REPEATMASKER {
     script:
     def args    = task.ext.args     ?: ''
     prefix      = task.ext.prefix   ?: "${meta.id}"
-    def lib_arg = lib               ? "-lib repeatlib/$lib"   : ''
+    def lib_arg = lib               ? "-lib $lib"   : ''
 
     def out_fasta    = fasta.getBaseName(fasta.name.endsWith('.gz') ? 1 : 0)
     def fasta_gz_cmd = fasta.name.endsWith('.gz') ? "gunzip -c ${fasta} > ${out_fasta}" : ""
