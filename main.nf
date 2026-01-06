@@ -42,11 +42,17 @@ def helpMessage() {
         --input         Path to input genome FASTA file
     
     Optional arguments:
+        --repeat_lib    Path to pre-built repeat library FASTA file.
+                        If provided, skips RepeatModeler and starts from RepeatMasker.
         --outdir        Output directory (default: 'results')
         --help          Show this help message
     
-    Example:
+    Examples:
+        # Full pipeline (de novo repeat identification)
         nextflow run main.nf --input genome.fasta
+        
+        # Start from RepeatMasker with existing repeat library
+        nextflow run main.nf --input genome.fasta --repeat_lib repeats.fa
     """.stripIndent()
 }
 
@@ -119,22 +125,41 @@ workflow {
     )
 
     //
-    // STEP 1: Build RepeatModeler database from input genome
+    // Determine repeat library source:
+    // Either use provided library or run RepeatModeler de novo
     //
-    REPEATMODELER_BUILDDATABASE(ch_genome)
+    if (params.repeat_lib) {
+        // Use pre-built repeat library (skip RepeatModeler)
+        log.info "Using provided repeat library: ${params.repeat_lib}"
+        def lib_file = file(params.repeat_lib, checkIfExists: true)
+        ch_repeat_lib = channel.of(lib_file)
+        ch_versions_repeatmodeler = channel.empty()
+    } else {
+        // Run RepeatModeler de novo
+        log.info "No repeat library provided, running RepeatModeler de novo..."
+        
+        //
+        // STEP 1: Build RepeatModeler database from input genome
+        //
+        REPEATMODELER_BUILDDATABASE(ch_genome)
+
+        //
+        // STEP 2: Run RepeatModeler to identify de novo repeat families
+        //
+        REPEATMODELER_REPEATMODELER(REPEATMODELER_BUILDDATABASE.out.db)
+        
+        ch_repeat_lib = REPEATMODELER_REPEATMODELER.out.fasta.map { _meta, fasta -> fasta }
+        ch_versions_repeatmodeler = REPEATMODELER_BUILDDATABASE.out.versions
+            .mix(REPEATMODELER_REPEATMODELER.out.versions)
+    }
 
     //
-    // STEP 2: Run RepeatModeler to identify de novo repeat families
-    //
-    REPEATMODELER_REPEATMODELER(REPEATMODELER_BUILDDATABASE.out.db)
-
-    //
-    // STEP 3: Run RepeatMasker using the de novo repeat library
-    // Uses the genome FASTA and the repeat families identified by RepeatModeler
+    // STEP 3: Run RepeatMasker using the repeat library
+    // Uses the genome FASTA and the repeat library (provided or from RepeatModeler)
     //
     REPEATMASKER_REPEATMASKER(
         ch_genome,
-        REPEATMODELER_REPEATMODELER.out.fasta.map { _meta, fasta -> fasta }
+        ch_repeat_lib
     )
 
     //
@@ -149,8 +174,7 @@ workflow {
     //
     // Collect version information from all modules and save to disk
     //
-    ch_versions = REPEATMODELER_BUILDDATABASE.out.versions
-        .mix(REPEATMODELER_REPEATMODELER.out.versions)
+    ch_versions = ch_versions_repeatmodeler
         .mix(REPEATMASKER_REPEATMASKER.out.versions)
         .mix(ONECODETOFINDTHEMALL.out.versions)
         .collectFile(name: 'collated_versions.yml')
