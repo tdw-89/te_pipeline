@@ -44,6 +44,10 @@ process ONECODETOFINDTHEMALL {
     def args_octrta = task.ext.args_octrta  ?: ''
     def prefix      = task.ext.prefix       ?: "${meta.id}"
     """
+    # Set locale to avoid Perl warnings
+    export LC_ALL=C
+    export LANG=C
+
     # Set Julia depot path: writable location first for caching, then container's packages
     export JULIA_DEPOT_PATH="\${PWD}/.julia:/opt/julia"
     mkdir -p "\${PWD}/.julia"
