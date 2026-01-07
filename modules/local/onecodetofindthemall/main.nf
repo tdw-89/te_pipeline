@@ -22,8 +22,8 @@ process ONECODETOFINDTHEMALL {
 
     // Container with Perl + Julia + OneCodeToFindThemAll scripts
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://tdw0student0uml/octfta:v1.0':
-        'tdw0student0uml/octfta:v1.0' }"
+        'docker://tdw0student0uml/octfta:latest':
+        'tdw0student0uml/octfta:latest' }"
 
     input:
     tuple val(meta), path(repeatmasker_out)
