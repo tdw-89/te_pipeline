@@ -42,7 +42,7 @@ process ONECODETOFINDTHEMALL {
     script:
     def args_dict   = task.ext.args_dict    ?: ''
     def args_octrta = task.ext.args_octrta  ?: ''
-    def prefix      = task.ext.prefix       ?: "${meta.id}"
+    prefix          = task.ext.prefix       ?: "${meta.id}"
     """
     # Set locale to avoid Perl warnings
     export LC_ALL=C
